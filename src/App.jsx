@@ -99,7 +99,7 @@ function App() {
         <div className="container">
           <div className="hero-inner">
             <div className="hero-badge">
-              <Zap size={14} /> Yeni Sürüm Yayınlandı ({version})
+              <Zap size={14} /> En Yeni Sürüm: {version}
             </div>
             <h1 className="hero-title">
               İmalatçı Ustalar İçin <br />
