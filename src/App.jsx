@@ -15,9 +15,9 @@ import {
 
 function App() {
   const [downloadUrl, setDownloadUrl] = useState('https://github.com/Mr-Karaa/Usta-Core/releases/latest');
-  const [androidDownloadUrl, setAndroidDownloadUrl] = useState('https://github.com/Mr-Karaa/Usta-Core/releases/latest');
   const [version, setVersion] = useState('v2.1.8'); // Default to latest version
   const [isScrolled, setIsScrolled] = useState(false);
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.ustabalkon.app';
 
   useEffect(() => {
     // Scroll event listener for header styling
@@ -60,16 +60,11 @@ function App() {
             if (exeAsset) {
               setDownloadUrl(exeAsset.browser_download_url);
             }
-            // Find asset ending with .apk (e.g. usta-balkon-android-v2.1.8.apk)
-            const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
-            if (apkAsset) {
-              setAndroidDownloadUrl(apkAsset.browser_download_url);
-            }
           }
         }
       })
       .catch(err => {
-        console.warn('Fallback to release page, could not fetch direct exe/apk URL:', err);
+        console.warn('Fallback to release page, could not fetch direct exe URL:', err);
       });
   }, []);
 
@@ -118,8 +113,8 @@ function App() {
               <a href={downloadUrl} className="btn-primary">
                 <Download size={18} /> Usta Balkon'u İndir (Win)
               </a>
-              <a href={androidDownloadUrl} className="btn-secondary">
-                <Smartphone size={18} /> Android APK İndir
+              <a href={playStoreUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                <Smartphone size={18} /> Google Play (Android)
               </a>
             </div>
           </div>
@@ -167,8 +162,8 @@ function App() {
                 <a href={downloadUrl} className="btn-card orange" style={{ flex: 1 }}>
                   <Download size={16} /> Windows ({version})
                 </a>
-                <a href={androidDownloadUrl} className="btn-card outline" style={{ flex: 1 }}>
-                  <Smartphone size={16} /> Android APK
+                <a href={playStoreUrl} target="_blank" rel="noopener noreferrer" className="btn-card outline" style={{ flex: 1 }}>
+                  <Smartphone size={16} /> Google Play
                 </a>
               </div>
             </div>
