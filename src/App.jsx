@@ -80,7 +80,7 @@ function App() {
         <div className="container">
           <div className="header-container">
             <a href="#" className="logo-wrapper">
-              <div className="logo-icon">U</div>
+              <img src="/logo.jpg" alt="Usta Core Logo" className="logo-icon" style={{ objectFit: 'cover' }} />
               <div className="logo-text">Usta<span>Core</span></div>
             </a>
             <nav>
@@ -283,7 +283,7 @@ function App() {
           <div className="footer-top">
             <div className="footer-info">
               <a href="#" className="footer-logo">
-                <div className="logo-icon" style={{ width: 28, height: 28, fontSize: '1.1rem', borderRadius: 7 }}>U</div>
+                <img src="/logo.jpg" alt="Usta Core Logo" className="logo-icon" style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'cover' }} />
                 <div className="logo-text" style={{ fontSize: '1.25rem' }}>Usta<span>Core</span></div>
               </a>
               <p>İmalatçı ve montajcı ustaların iş süreçlerini dijitalleştirerek hata payını sıfıra düşüren ve verimliliği artıran yazılım ekosistemi.</p>
