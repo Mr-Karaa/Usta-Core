@@ -10,14 +10,70 @@ import {
   Cloud, 
   Zap, 
   Laptop,
-  Check
+  Check,
+  Pencil,
+  LogOut,
+  Lock
 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase client initialization
+const supabaseUrl = 'https://rqcpcyreupulatwfordu.supabase.co';
+const supabaseAnonKey = 'sb_publishable_pmSrQGl7GzRHKIQxoZoISQ_aUiWgjHf';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const DEFAULT_TEXTS = {
+  hero_title: 'İmalatçı Ustalar İçin <br /> <span>Geleceğin Yazılım Çözümleri</span>',
+  hero_desc: 'Kağıt kalemle yapılan karmaşık hesaplara son verin. Usta Core yazılımları ile cam balkon ve PVC doğrama çizimlerini saniyeler içinde yapın, sıfır fireyle üretime geçin.',
+  product1_title: 'Usta Balkon',
+  product1_desc: 'Cam balkon üreticileri ve montajcıları için geliştirilmiş profesyonel çizim, kesim ve maliyet hesaplama aracı.',
+  product1_f1: 'İzometrik Görünüm:',
+  product1_f1_desc: 'Çizimi 3D ve canlı izleyin.',
+  product1_f2: 'Kesim Optimizasyonu:',
+  product1_f2_desc: 'Profil firesini en aza indirin.',
+  product1_f3: 'Otomatik PDF Rapor:',
+  product1_f3_desc: 'Anında fiyat teklifleri oluşturun.',
+  product1_f4: 'Çevrimdışı Çalışma:',
+  product1_f4_desc: 'İnternetsiz dükkanda kullanın.',
+  product2_title: 'Usta PVC',
+  product2_desc: 'PVC doğrama, kapı ve pencere imalatçıları için hazırlanan, hatasız malzeme hesaplama ve teklif sistemi.',
+  product2_f1: 'Pencere/Kapı Tasarımı:',
+  product2_f1_desc: 'Standart veya özel doğramalar.',
+  product2_f2: 'Aksesuar & Vida Hesabı:',
+  product2_f2_desc: 'Gerekli tüm ekstraları bulun.',
+  product2_f3: 'Maliyet Analizi:',
+  product2_f3_desc: 'Kar marjına göre anında fiyatlandırma.',
+  product2_f4: 'Fire Yönetimi:',
+  product2_f4_desc: 'Alüminyum ve plastik firesini azaltın.',
+  product3_title: 'Usta Defteri',
+  product3_desc: 'Müşteri ilişkileri, şantiyedeki ölçüler ve iş durumlarının anlık takibi için tasarlanmış mobil tabanlı master yönetim sistemi.',
+  product3_f1: 'Mobil Müşteri Kaydı:',
+  product3_f1_desc: 'Telefonunuzdan işleri kaydedin.',
+  product3_f2: 'Anlık Bulut Senkronizasyonu:',
+  product3_f2_desc: 'Veriler kaybolmaz.',
+  product3_f3: 'Balkon Uygulamasıyla Uyum:',
+  product3_f3_desc: 'Proje durumlarını senkronize edin.',
+  product3_f4: 'Finans & Borç Alacak:',
+  product3_f4_desc: 'Ödemeleri kolayca takip edin.',
+  footer_desc: 'İmalatçı ve montajcı ustaların iş süreçlerini dijitalleştirerek hata payını sıfıra düşüren ve verimliliği artıran yazılım ekosistemi.'
+};
 
 function App() {
   const [downloadUrl, setDownloadUrl] = useState('https://github.com/Mr-Karaa/Usta-Core/releases/latest');
   const [version, setVersion] = useState('v2.1.8'); // Default to latest version
   const [isScrolled, setIsScrolled] = useState(false);
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.ustabalkon.app';
+
+  // CMS States
+  const [texts, setTexts] = useState(DEFAULT_TEXTS);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [logoClicks, setLogoClicks] = useState(0);
+  const [editingField, setEditingField] = useState(null); // { key, title }
+  const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     // Scroll event listener for header styling
@@ -30,6 +86,49 @@ function App() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Load texts from Supabase
+    supabase.from('website_content').select('*')
+      .then(({ data, error }) => {
+        if (data && !error) {
+          const dbTexts = {};
+          data.forEach(item => {
+            dbTexts[item.key] = item.content;
+          });
+          setTexts(prev => ({ ...prev, ...dbTexts }));
+        }
+      });
+
+    // Check query params for admin mode
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === 'true') {
+      setShowLoginModal(true);
+      // Remove query param quietly
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAdmin(true);
+        document.body.classList.add('admin-active');
+      }
+    });
+
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setIsAdmin(true);
+        document.body.classList.add('admin-active');
+      } else {
+        setIsAdmin(false);
+        document.body.classList.remove('admin-active');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -68,8 +167,108 @@ function App() {
       });
   }, []);
 
+  // CMS Handlers
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoginError('Hatalı e-posta adresi veya şifre.');
+    } else {
+      setShowLoginModal(false);
+      setEmail('');
+      setPassword('');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAdmin(false);
+    document.body.classList.remove('admin-active');
+  };
+
+  const handleEdit = (key, title, currentValue) => {
+    setEditingField({ key, title });
+    setEditingText(currentValue);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingField) return;
+    const { key } = editingField;
+
+    // Optimistically update locally
+    setTexts(prev => ({ ...prev, [key]: editingText }));
+    setEditingField(null);
+
+    const { error } = await supabase
+      .from('website_content')
+      .upsert({ key, content: editingText });
+
+    if (error) {
+      console.error('Veritabanına kaydedilirken hata oluştu:', error);
+      alert('Yazı veritabanına kaydedilemedi: ' + error.message);
+    }
+  };
+
+  const handleLogoClick = () => {
+    setLogoClicks(prev => {
+      const nextClicks = prev + 1;
+      if (nextClicks >= 5) {
+        setShowLoginModal(true);
+        return 0;
+      }
+      return nextClicks;
+    });
+  };
+
+  // Reset clicks after 2 seconds of inactivity
+  useEffect(() => {
+    if (logoClicks > 0) {
+      const t = setTimeout(() => setLogoClicks(0), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [logoClicks]);
+
+  // Editable Text Component
+  const EditableText = ({ id, tag: Tag = 'span', className = '' }) => {
+    const content = texts[id] || DEFAULT_TEXTS[id] || '';
+    
+    if (!isAdmin) {
+      return <Tag className={className} dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+
+    return (
+      <Tag className={`admin-editable-container ${className}`}>
+        <span dangerouslySetInnerHTML={{ __html: content }} />
+        <button 
+          className="admin-edit-btn" 
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleEdit(id, id.replace(/_/g, ' ').toUpperCase(), content);
+          }}
+          title="Yazıyı Düzenle"
+        >
+          <Pencil size={12} />
+        </button>
+      </Tag>
+    );
+  };
+
   return (
     <div className="App">
+      {/* Admin Toolbar */}
+      {isAdmin && (
+        <div className="admin-toolbar">
+          <div className="admin-toolbar-title">
+            <Lock size={14} style={{ marginRight: '6px' }} /> Usta Core Yönetici Paneli (Aktif)
+          </div>
+          <button onClick={handleLogout} className="admin-toolbar-btn" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <LogOut size={14} /> Çıkış Yap
+          </button>
+        </div>
+      )}
+
       {/* Decorative Orbs */}
       <div className="orb-glow orb-orange"></div>
       <div className="orb-glow orb-blue"></div>
@@ -79,7 +278,7 @@ function App() {
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container">
           <div className="header-container">
-            <a href="#" className="logo-wrapper">
+            <a href="#" className="logo-wrapper" onClick={(e) => { e.preventDefault(); handleLogoClick(); }}>
               <img src="/logo.jpg" alt="Usta Core Logo" className="logo-icon" style={{ objectFit: 'cover' }} />
               <div className="logo-text">Usta<span>Core</span></div>
             </a>
@@ -102,13 +301,8 @@ function App() {
             <div className="hero-badge">
               <Zap size={14} /> En Yeni Sürüm: {version}
             </div>
-            <h1 className="hero-title">
-              İmalatçı Ustalar İçin <br />
-              <span>Geleceğin Yazılım Çözümleri</span>
-            </h1>
-            <p className="hero-desc">
-              Kağıt kalemle yapılan karmaşık hesaplara son verin. Usta Core yazılımları ile cam balkon ve PVC doğrama çizimlerini saniyeler içinde yapın, sıfır fireyle üretime geçin.
-            </p>
+            <EditableText id="hero_title" tag="h1" className="hero-title" />
+            <EditableText id="hero_desc" tag="p" className="hero-desc" />
             <div className="hero-cta">
               <a href={downloadUrl} className="btn-primary">
                 <Download size={18} /> Usta Balkon'u İndir (Win)
@@ -137,25 +331,25 @@ function App() {
                 <Laptop size={28} />
               </div>
               <div className="product-info">
-                <h3>Usta Balkon</h3>
-                <p>Cam balkon üreticileri ve montajcıları için geliştirilmiş profesyonel çizim, kesim ve maliyet hesaplama aracı.</p>
+                <h3><EditableText id="product1_title" /></h3>
+                <p><EditableText id="product1_desc" /></p>
               </div>
               <ul className="product-features">
                 <li>
                   <Check size={16} className="text-orange" style={{ color: 'var(--color-orange)' }} />
-                  <span>İzometrik Görünüm:</span> Çizimi 3D ve canlı izleyin.
+                  <span><EditableText id="product1_f1" /></span> <EditableText id="product1_f1_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-orange" style={{ color: 'var(--color-orange)' }} />
-                  <span>Kesim Optimizasyonu:</span> Profil firesini en aza indirin.
+                  <span><EditableText id="product1_f2" /></span> <EditableText id="product1_f2_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-orange" style={{ color: 'var(--color-orange)' }} />
-                  <span>Otomatik PDF Rapor:</span> Anında fiyat teklifleri oluşturun.
+                  <span><EditableText id="product1_f3" /></span> <EditableText id="product1_f3_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-orange" style={{ color: 'var(--color-orange)' }} />
-                  <span>Çevrimdışı Çalışma:</span> İnternetsiz dükkanda kullanın.
+                  <span><EditableText id="product1_f4" /></span> <EditableText id="product1_f4_desc" />
                 </li>
               </ul>
               <div className="product-action" style={{ display: 'flex', gap: '12px' }}>
@@ -175,25 +369,25 @@ function App() {
                 <Layers size={28} />
               </div>
               <div className="product-info">
-                <h3>Usta PVC</h3>
-                <p>PVC doğrama, kapı ve pencere imalatçıları için hazırlanan, hatasız malzeme hesaplama ve teklif sistemi.</p>
+                <h3><EditableText id="product2_title" /></h3>
+                <p><EditableText id="product2_desc" /></p>
               </div>
               <ul className="product-features">
                 <li>
                   <Check size={16} className="text-blue" style={{ color: 'var(--color-blue)' }} />
-                  <span>Pencere/Kapı Tasarımı:</span> Standart veya özel doğramalar.
+                  <span><EditableText id="product2_f1" /></span> <EditableText id="product2_f1_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-blue" style={{ color: 'var(--color-blue)' }} />
-                  <span>Aksesuar & Vida Hesabı:</span> Gerekli tüm ekstraları bulun.
+                  <span><EditableText id="product2_f2" /></span> <EditableText id="product2_f2_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-blue" style={{ color: 'var(--color-blue)' }} />
-                  <span>Maliyet Analizi:</span> Kar marjına göre anında fiyatlandırma.
+                  <span><EditableText id="product2_f3" /></span> <EditableText id="product2_f3_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-blue" style={{ color: 'var(--color-blue)' }} />
-                  <span>Fire Yönetimi:</span> Alüminyum ve plastik firesini azaltın.
+                  <span><EditableText id="product2_f4" /></span> <EditableText id="product2_f4_desc" />
                 </li>
               </ul>
               <div className="product-action">
@@ -210,25 +404,25 @@ function App() {
                 <Smartphone size={28} />
               </div>
               <div className="product-info">
-                <h3>Usta Defteri</h3>
-                <p>Müşteri ilişkileri, şantiyedeki ölçüler ve iş durumlarının anlık takibi için tasarlanmış mobil tabanlı master yönetim sistemi.</p>
+                <h3><EditableText id="product3_title" /></h3>
+                <p><EditableText id="product3_desc" /></p>
               </div>
               <ul className="product-features">
                 <li>
                   <Check size={16} className="text-teal" style={{ color: 'var(--color-teal)' }} />
-                  <span>Mobil Müşteri Kaydı:</span> Telefonunuzdan işleri kaydedin.
+                  <span><EditableText id="product3_f1" /></span> <EditableText id="product3_f1_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-teal" style={{ color: 'var(--color-teal)' }} />
-                  <span>Anlık Bulut Senkronizasyonu:</span> Veriler kaybolmaz.
+                  <span><EditableText id="product3_f2" /></span> <EditableText id="product3_f2_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-teal" style={{ color: 'var(--color-teal)' }} />
-                  <span>Balkon Uygulamasıyla Uyum:</span> Proje durumlarını senkronize edin.
+                  <span><EditableText id="product3_f3" /></span> <EditableText id="product3_f3_desc" />
                 </li>
                 <li>
                   <Check size={16} className="text-teal" style={{ color: 'var(--color-teal)' }} />
-                  <span>Finans & Borç Alacak:</span> Ödemeleri kolayca takip edin.
+                  <span><EditableText id="product3_f4" /></span> <EditableText id="product3_f4_desc" />
                 </li>
               </ul>
               <div className="product-action">
@@ -282,11 +476,11 @@ function App() {
         <div className="container">
           <div className="footer-top">
             <div className="footer-info">
-              <a href="#" className="footer-logo">
+              <a href="#" className="footer-logo" onClick={(e) => { e.preventDefault(); handleLogoClick(); }}>
                 <img src="/logo.jpg" alt="Usta Core Logo" className="logo-icon" style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'cover' }} />
                 <div className="logo-text" style={{ fontSize: '1.25rem' }}>Usta<span>Core</span></div>
               </a>
-              <p>İmalatçı ve montajcı ustaların iş süreçlerini dijitalleştirerek hata payını sıfıra düşüren ve verimliliği artıran yazılım ekosistemi.</p>
+              <EditableText id="footer_desc" tag="p" />
             </div>
             <div className="footer-links-group">
               <div className="footer-links">
@@ -315,6 +509,65 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Admin Login Modal */}
+      {showLoginModal && (
+        <div className="admin-modal-overlay" onClick={() => setShowLoginModal(false)}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Yönetici Girişi</h3>
+            <p>Lütfen devam etmek için yönetici bilgilerinizi girin.</p>
+            <form onSubmit={handleLogin} className="admin-modal-form">
+              <div className="admin-input-group">
+                <label className="admin-input-label">E-posta</label>
+                <input 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="admin-input" 
+                  required 
+                  placeholder="admin@ustacore.com"
+                />
+              </div>
+              <div className="admin-input-group">
+                <label className="admin-input-label">Şifre</label>
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  className="admin-input" 
+                  required 
+                  placeholder="••••••••"
+                />
+              </div>
+              {loginError && <div className="admin-error-msg">{loginError}</div>}
+              <button type="submit" className="admin-submit-btn">Giriş Yap</button>
+              <button type="button" onClick={() => { setShowLoginModal(false); setLoginError(''); }} className="admin-cancel-btn">İptal</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Editor Dialog */}
+      {editingField && (
+        <div className="admin-edit-popover-overlay" onClick={() => setEditingField(null)}>
+          <div className="admin-edit-popover" onClick={(e) => e.stopPropagation()}>
+            <h4>Metni Düzenle: {editingField.title}</h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px', textAlign: 'left' }}>
+              İpucu: Paragrafı bölmek için <code>&lt;br /&gt;</code>, turuncu/renkli yapmak istediğiniz alanlar için <code>&lt;span&gt;metin&lt;/span&gt;</code> etiketlerini kullanabilirsiniz.
+            </p>
+            <textarea 
+              value={editingText} 
+              onChange={(e) => setEditingText(e.target.value)} 
+              className="admin-edit-textarea"
+              placeholder="Yeni metni yazın..."
+            />
+            <div className="admin-edit-actions">
+              <button onClick={() => setEditingField(null)} className="admin-edit-cancel">İptal</button>
+              <button onClick={handleSaveEdit} className="admin-edit-save">Kaydet</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
