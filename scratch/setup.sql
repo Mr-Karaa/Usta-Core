@@ -1,29 +1,29 @@
 -- 1. Web sitesi içerik tablosunu oluştur
-CREATE TABLE IF NOT EXISTS public.website_texts (
+CREATE TABLE IF NOT EXISTS public."website-text" (
     key TEXT PRIMARY KEY,
     content TEXT NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- 2. Satır Seviyesi Güvenliği (RLS) etkinleştir
-ALTER TABLE public.website_texts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."website-text" ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS Politikalarını oluştur
 -- Herkesin yazıları okuyabilmesine izin ver (ziyaretçiler için)
-DROP POLICY IF EXISTS "Allow public read access" ON public.website_texts;
-CREATE POLICY "Allow public read access" ON public.website_texts
+DROP POLICY IF EXISTS "Allow public read access" ON public."website-text";
+CREATE POLICY "Allow public read access" ON public."website-text"
     FOR SELECT TO public USING (true);
 
 -- Sadece ustadefterr@gmail.com e-postasına sahip admin kullanıcısının güncelleme/ekleme yapmasına izin ver
-DROP POLICY IF EXISTS "Allow authenticated update access" ON public.website_texts;
-DROP POLICY IF EXISTS "Allow admin modify access" ON public.website_texts;
-CREATE POLICY "Allow admin modify access" ON public.website_texts
+DROP POLICY IF EXISTS "Allow authenticated update access" ON public."website-text";
+DROP POLICY IF EXISTS "Allow admin modify access" ON public."website-text";
+CREATE POLICY "Allow admin modify access" ON public."website-text"
     FOR ALL TO authenticated 
     USING (auth.jwt() ->> 'email' = 'ustadefterr@gmail.com')
     WITH CHECK (auth.jwt() ->> 'email' = 'ustadefterr@gmail.com');
 
 -- 4. Varsayılan Türkçe yazıları içeri aktar (varsa üzerine yazmaz)
-INSERT INTO public.website_texts (key, content) VALUES
+INSERT INTO public."website-text" (key, content) VALUES
 ('hero_title', 'İmalatçı Ustalar İçin Geleceğin Yazılım Çözümleri'),
 ('hero_desc', 'Kağıt kalemle yapılan karmaşık hesaplara son verin. Usta Core yazılımları ile cam balkon ve PVC doğrama çizimlerini saniyeler içinde yapın, sıfır fireyle üretime geçin.'),
 ('product1_title', 'Usta Balkon'),

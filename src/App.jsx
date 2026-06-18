@@ -90,7 +90,7 @@ function App() {
 
   useEffect(() => {
     // Load texts from Supabase
-    supabase.from('website_texts').select('*')
+    supabase.from('website-text').select('*')
       .then(({ data, error }) => {
         if (data && !error) {
           const dbTexts = {};
@@ -204,7 +204,7 @@ function App() {
     setEditingField(null);
 
     const { error } = await supabase
-      .from('website_texts')
+      .from('website-text')
       .upsert({ key, content: editingText });
 
     if (error) {
