@@ -14,10 +14,13 @@ DROP POLICY IF EXISTS "Allow public read access" ON public.website_content;
 CREATE POLICY "Allow public read access" ON public.website_content
     FOR SELECT TO public USING (true);
 
--- Sadece giriş yapmış yetkili kullanıcıların (admin) güncelleme yapmasına izin ver
+-- Sadece melih8662@gmail.com e-postasına sahip admin kullanıcısının güncelleme/ekleme yapmasına izin ver
 DROP POLICY IF EXISTS "Allow authenticated update access" ON public.website_content;
-CREATE POLICY "Allow authenticated update access" ON public.website_content
-    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow admin modify access" ON public.website_content;
+CREATE POLICY "Allow admin modify access" ON public.website_content
+    FOR ALL TO authenticated 
+    USING (auth.jwt() ->> 'email' = 'melih8662@gmail.com')
+    WITH CHECK (auth.jwt() ->> 'email' = 'melih8662@gmail.com');
 
 -- 4. Varsayılan Türkçe yazıları içeri aktar (varsa üzerine yazmaz)
 INSERT INTO public.website_content (key, content) VALUES

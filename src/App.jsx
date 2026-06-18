@@ -111,15 +111,18 @@ function App() {
 
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+      if (session && session.user && session.user.email === 'melih8662@gmail.com') {
         setIsAdmin(true);
         document.body.classList.add('admin-active');
+      } else {
+        setIsAdmin(false);
+        document.body.classList.remove('admin-active');
       }
     });
 
     // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (session && session.user && session.user.email === 'melih8662@gmail.com') {
         setIsAdmin(true);
         document.body.classList.add('admin-active');
       } else {
