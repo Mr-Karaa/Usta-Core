@@ -1067,3 +1067,149 @@ body.admin-active .site-header {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+.feature-box {
+  position: relative;
+  transition: var(--transition-smooth);
+}
+
+/* Admin Actions for Feature Box */
+.feature-box-admin-actions {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.feature-box:hover .feature-box-admin-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feature-admin-btn {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.feature-admin-btn:hover {
+  background: var(--bg-primary);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.feature-admin-btn.delete:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Add Feature Card */
+.feature-box.add-new-card {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.01);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  text-align: center;
+  padding: 30px;
+}
+
+.feature-box.add-new-card:hover {
+  border-color: var(--color-orange);
+  background: rgba(249, 115, 22, 0.03);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(249, 115, 22, 0.05);
+}
+
+.feature-add-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  transition: var(--transition-smooth);
+}
+
+.feature-box.add-new-card:hover .feature-add-icon-circle {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: var(--color-orange);
+  color: var(--color-orange);
+}
+
+.feature-box.add-new-card h4 {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  transition: var(--transition-smooth);
+}
+
+.feature-box.add-new-card:hover h4 {
+  color: var(--text-primary);
+}
+
+/* Icon Selection Grid in Modal */
+.admin-icon-selector-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: -4px;
+  text-align: left;
+}
+
+.admin-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.admin-icon-item {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.admin-icon-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.admin-icon-item.active {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: var(--color-orange);
+  color: var(--color-orange);
+}

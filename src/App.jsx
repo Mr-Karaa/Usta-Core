@@ -13,7 +13,16 @@ import {
   Check,
   Pencil,
   LogOut,
-  Lock
+  Lock,
+  Trash2,
+  Plus,
+  Star,
+  Shield,
+  Settings,
+  Wrench,
+  Hammer,
+  Award,
+  Users
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -21,6 +30,24 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://rqcpcyreupulatwfordu.supabase.co';
 const supabaseAnonKey = 'sb_publishable_pmSrQGl7GzRHKIQxoZoISQ_aUiWgjHf';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const ICON_MAP = {
+  ShieldCheck,
+  Cloud,
+  CheckCircle2,
+  Zap,
+  Cpu,
+  Smartphone,
+  Laptop,
+  Layers,
+  Star,
+  Shield,
+  Settings,
+  Wrench,
+  Hammer,
+  Award,
+  Users
+};
 
 const DEFAULT_TEXTS = {
   hero_title: 'İmalatçı Ustalar İçin <br /> <span>Geleceğin Yazılım Çözümleri</span>',
@@ -55,7 +82,29 @@ const DEFAULT_TEXTS = {
   product3_f3_desc: 'Proje durumlarını senkronize edin.',
   product3_f4: 'Finans & Borç Alacak:',
   product3_f4_desc: 'Ödemeleri kolayca takip edin.',
-  footer_desc: 'İmalatçı ve montajcı ustaların iş süreçlerini dijitalleştirerek hata payını sıfıra düşüren ve verimliliği artıran yazılım ekosistemi.'
+  footer_desc: 'İmalatçı ve montajcı ustaların iş süreçlerini dijitalleştirerek hata payını sıfıra düşüren ve verimliliği artıran yazılım ekosistemi.',
+  features_title: 'Neden Usta Core Teknolojileri?',
+  features_subtitle: 'Ortak Avantajlar',
+  features_list: JSON.stringify([
+    {
+      id: "f_1",
+      icon: "ShieldCheck",
+      title: "Çevrimdışı Çalışma Gücü",
+      desc: "İnternet bağlantınızın zayıf olduğu şantiyelerde veya dükkanlarda programlarımız durmaz. Tüm işlemlerinizi yerel olarak yapabilir, internet geldiğinde buluta yükleyebilirsiniz."
+    },
+    {
+      id: "f_2",
+      icon: "Cloud",
+      title: "Hızlı Bulut Senkronizasyonu",
+      desc: "Masaüstü ve mobil uygulamalarımız Supabase gücüyle birbirine bağlıdır. Sahada aldığınız bir ölçü dükkanınızdaki masaüstü ekranda anında görünür."
+    },
+    {
+      id: "f_3",
+      icon: "CheckCircle2",
+      title: "Sıfır Hata Payı",
+      desc: "Cam boşluğu, baza payları, fitil kesimleri ve profil boyları sistemlerimiz tarafından milimetrik olarak otomatik hesaplanır. Hatalı kesim maliyetlerinden tasarruf edersiniz."
+    }
+  ])
 };
 
 function App() {
@@ -74,6 +123,8 @@ function App() {
   const [logoClicks, setLogoClicks] = useState(0);
   const [editingField, setEditingField] = useState(null); // { key, title }
   const [editingText, setEditingText] = useState('');
+  const [activeEditingFeature, setActiveEditingFeature] = useState(null); // { index, icon, title, desc }
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
 
   useEffect(() => {
     // Scroll event listener for header styling
@@ -210,6 +261,85 @@ function App() {
     if (error) {
       console.error('Veritabanına kaydedilirken hata oluştu:', error);
       alert('Yazı veritabanına kaydedilemedi: ' + error.message);
+    }
+  };
+
+  const handleEditFeature = (index) => {
+    const currentFeatures = JSON.parse(texts.features_list || DEFAULT_TEXTS.features_list);
+    if (index === -1) {
+      setActiveEditingFeature({
+        index: -1,
+        icon: 'Wrench',
+        title: '',
+        desc: ''
+      });
+    } else {
+      const feat = currentFeatures[index];
+      setActiveEditingFeature({
+        index,
+        icon: feat.icon || 'Wrench',
+        title: feat.title || '',
+        desc: feat.desc || ''
+      });
+    }
+    setShowFeatureModal(true);
+  };
+
+  const handleDeleteFeature = async (index) => {
+    if (!confirm('Bu özellik kartını silmek istediğinize emin misiniz?')) return;
+    
+    const currentFeatures = JSON.parse(texts.features_list || DEFAULT_TEXTS.features_list);
+    const updatedFeatures = currentFeatures.filter((_, idx) => idx !== index);
+    const updatedJson = JSON.stringify(updatedFeatures);
+
+    // Optimistically update locally
+    setTexts(prev => ({ ...prev, features_list: updatedJson }));
+
+    const { error } = await supabase
+      .from('website_content')
+      .upsert({ key: 'features_list', content: updatedJson });
+
+    if (error) {
+      console.error('Silme işleminde hata oluştu:', error);
+      alert('Değişiklik veritabanına kaydedilemedi: ' + error.message);
+    }
+  };
+
+  const handleSaveFeature = async (e) => {
+    if (e) e.preventDefault();
+    if (!activeEditingFeature) return;
+
+    const currentFeatures = JSON.parse(texts.features_list || DEFAULT_TEXTS.features_list);
+    const { index, icon, title, desc } = activeEditingFeature;
+
+    const newFeature = {
+      id: index === -1 ? `f_${Date.now()}` : currentFeatures[index].id || `f_${Date.now()}`,
+      icon,
+      title,
+      desc
+    };
+
+    let updatedFeatures = [...currentFeatures];
+    if (index === -1) {
+      updatedFeatures.push(newFeature);
+    } else {
+      updatedFeatures[index] = newFeature;
+    }
+
+    const updatedJson = JSON.stringify(updatedFeatures);
+
+    // Optimistically update locally
+    setTexts(prev => ({ ...prev, features_list: updatedJson }));
+    setShowFeatureModal(false);
+    setActiveEditingFeature(null);
+
+    const { error } = await supabase
+      .from('website_content')
+      .upsert({ key: 'features_list', content: updatedJson });
+
+    if (error) {
+      console.error('Kaydetme işleminde hata oluştu:', error);
+      alert('Değişiklik veritabanına kaydedilemedi: ' + error.message);
     }
   };
 
@@ -442,34 +572,53 @@ function App() {
       <section id="features" className="features-section">
         <div className="container">
           <div className="section-header">
-            <div className="section-subtitle">Ortak Avantajlar</div>
-            <h2 className="section-main-title">Neden Usta Core Teknolojileri?</h2>
+            <div className="section-subtitle"><EditableText id="features_subtitle" /></div>
+            <h2 className="section-main-title"><EditableText id="features_title" /></h2>
           </div>
 
           <div className="features-grid">
-            <div className="feature-box">
-              <div className="feature-box-icon">
-                <ShieldCheck size={28} />
-              </div>
-              <h4>Çevrimdışı Çalışma Gücü</h4>
-              <p>İnternet bağlantınızın zayıf olduğu şantiyelerde veya dükkanlarda programlarımız durmaz. Tüm işlemlerinizi yerel olarak yapabilir, internet geldiğinde buluta yükleyebilirsiniz.</p>
-            </div>
+            {JSON.parse(texts.features_list || DEFAULT_TEXTS.features_list).map((feat, idx) => {
+              const IconComp = ICON_MAP[feat.icon] || Wrench;
+              return (
+                <div key={feat.id || idx} className="feature-box">
+                  {isAdmin && (
+                    <div className="feature-box-admin-actions">
+                      <button 
+                        className="feature-admin-btn" 
+                        onClick={() => handleEditFeature(idx)}
+                        title="Özelliği Düzenle"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button 
+                        className="feature-admin-btn delete" 
+                        onClick={() => handleDeleteFeature(idx)}
+                        title="Özelliği Sil"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
+                  <div className="feature-box-icon">
+                    <IconComp size={28} />
+                  </div>
+                  <h4>{feat.title}</h4>
+                  <p>{feat.desc}</p>
+                </div>
+              );
+            })}
 
-            <div className="feature-box">
-              <div className="feature-box-icon">
-                <Cloud size={28} />
+            {isAdmin && (
+              <div 
+                className="feature-box add-new-card"
+                onClick={() => handleEditFeature(-1)}
+              >
+                <div className="feature-add-icon-circle">
+                  <Plus size={20} />
+                </div>
+                <h4>Yeni Özellik Ekle</h4>
               </div>
-              <h4>Hızlı Bulut Senkronizasyonu</h4>
-              <p>Masaüstü ve mobil uygulamalarımız Supabase gücüyle birbirine bağlıdır. Sahada aldığınız bir ölçü dükkanınızdaki masaüstü ekranda anında görünür.</p>
-            </div>
-
-            <div className="feature-box">
-              <div className="feature-box-icon">
-                <CheckCircle2 size={28} />
-              </div>
-              <h4>Sıfır Hata Payı</h4>
-              <p>Cam boşluğu, baza payları, fitil kesimleri ve profil boyları sistemlerimiz tarafından milimetrik olarak otomatik hesaplanır. Hatalı kesim maliyetlerinden tasarruf edersiniz.</p>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -568,6 +717,67 @@ function App() {
               <button onClick={() => setEditingField(null)} className="admin-edit-cancel">İptal</button>
               <button onClick={handleSaveEdit} className="admin-edit-save">Kaydet</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feature Card Editor Modal */}
+      {showFeatureModal && activeEditingFeature && (
+        <div className="admin-edit-popover-overlay" onClick={() => { setShowFeatureModal(false); setActiveEditingFeature(null); }}>
+          <div className="admin-edit-popover" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <h4>{activeEditingFeature.index === -1 ? 'Yeni Özellik Ekle' : 'Özelliği Düzenle'}</h4>
+            
+            <form onSubmit={handleSaveFeature} className="admin-modal-form" style={{ display: 'flex', flex: '1', flexDirection: 'column', gap: '12px' }}>
+              <div className="admin-input-group">
+                <label className="admin-input-label">Başlık</label>
+                <input 
+                  type="text" 
+                  value={activeEditingFeature.title} 
+                  onChange={(e) => setActiveEditingFeature(prev => ({ ...prev, title: e.target.value }))} 
+                  className="admin-input" 
+                  required 
+                  placeholder="Çevrimdışı Çalışma Gücü"
+                />
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-input-label">Açıklama</label>
+                <textarea 
+                  value={activeEditingFeature.desc} 
+                  onChange={(e) => setActiveEditingFeature(prev => ({ ...prev, desc: e.target.value }))} 
+                  className="admin-edit-textarea" 
+                  required 
+                  placeholder="Özellik detaylarını girin..."
+                  style={{ minHeight: '80px' }}
+                />
+              </div>
+
+              <div className="admin-input-group">
+                <label className="admin-input-label">Simge (İkon) Seçin</label>
+                <div className="admin-icon-grid">
+                  {Object.keys(ICON_MAP).map((iconName) => {
+                    const IconComp = ICON_MAP[iconName];
+                    const isActive = activeEditingFeature.icon === iconName;
+                    return (
+                      <button
+                        key={iconName}
+                        type="button"
+                        className={`admin-icon-item ${isActive ? 'active' : ''}`}
+                        onClick={() => setActiveEditingFeature(prev => ({ ...prev, icon: iconName }))}
+                        title={iconName}
+                      >
+                        <IconComp size={20} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="admin-edit-actions" style={{ marginTop: '10px' }}>
+                <button type="button" onClick={() => { setShowFeatureModal(false); setActiveEditingFeature(null); }} className="admin-edit-cancel">İptal</button>
+                <button type="submit" className="admin-edit-save">Kaydet</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
